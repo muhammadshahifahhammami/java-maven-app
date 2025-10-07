@@ -1,36 +1,43 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'maven-3.9'
+        jdk 'jdk-17'
+    }
+
     stages {
-        stage('Test') {
+        stage('Checkout') {
             steps {
-                script {
-                    echo "Testing the application..."
-                    echo "Executing pipeline for branch ${BRANCH_NAME}" 
-                }
+                checkout scm
             }
         }
 
         stage('Build') {
-            when {
-                expression { BRANCH_NAME == 'main' } 
-            }
             steps {
-                script {
-                    echo "Building the application..."
-                }
+                sh 'mvn clean package'
             }
         }
 
-        stage('Deploy') {
-            when {
-                expression { BRANCH_NAME == 'main' }
-            }
+        stage('Test') {
             steps {
-                script {
-                    echo "Deploying the application..."
-                }
+                sh 'mvn test'
             }
+        }
+
+        stage('Archive Artifacts') {
+            steps {
+                archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build success ✅'
+        }
+        failure {
+            echo 'Build failed ❌'
         }
     }
 }
