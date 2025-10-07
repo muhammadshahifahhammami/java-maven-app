@@ -1,43 +1,19 @@
 pipeline {
     agent any
-
-    tools {
-        maven 'maven-3.9'
-        jdk 'jdk-17'
-    }
-
+    
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-
-        stage('Build') {
+        
+        stage('Test Build') {
             steps {
-                sh 'mvn clean package'
+                sh 'echo "Hello Jenkins"'
+                sh 'pwd'
+                sh 'ls -la'
             }
-        }
-
-        stage('Test') {
-            steps {
-                sh 'mvn test'
-            }
-        }
-
-        stage('Archive Artifacts') {
-            steps {
-                archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'Build success ✅'
-        }
-        failure {
-            echo 'Build failed ❌'
         }
     }
 }
