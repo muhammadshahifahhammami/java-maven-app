@@ -1,64 +1,59 @@
 pipeline {
     agent any
-    
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-        
-        stage('Test Build') {
-            steps {
-                sh 'echo "Hello Jenkins"'
-                sh 'pwd'
-                sh 'ls -la'
-            }
-        }
-    }
-}
 
-pipeline {
-    agent any
     stages {
         stage('Test') {
             steps {
-                sh 'echo "Pipeline bekerja!"'
-            }
-        }
-    }
-}
-
-pipeline {
-    agent any
-    stages {
-        stage('Build') {
-            steps {
-                sh 'mvn --version'
-                sh 'mvn clean compile -DskipTests'
-            }
-        }
-    }
-}
-
-pipeline {
-    agent any
-
-    tools {
-        maven 'maven-3.9'
-        jdk 'jdk-17'
-    }
-
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
+                echo "Testing the application..."
+                echo "Executing pipeline for branch ${env.BRANCH_NAME}"
             }
         }
 
         stage('Build') {
+            when {
+                expression { env.BRANCH_NAME == 'main' }
+            }
             steps {
-                sh 'mvn clean package -DskipTests'
+                echo "Building the application..."
+            }
+        }
+
+        stage('Deploy') {
+            when {
+                expression { env.BRANCH_NAME == 'main' }
+            }
+            steps {
+                echo "Deploying the application..."
+            }
+        }
+    }
+
+    post {
+        success {
+            script {
+                def payload = [
+                    content: "✅ Build SUCCESS on ${env.BRANCH_NAME}\n🔗 URL: ${env.BUILD_URL}"
+                ]
+                httpRequest(
+                    httpMode: 'POST',
+                    contentType: 'APPLICATION_JSON',
+                    requestBody: groovy.json.JsonOutput.toJson(payload),
+                    url: 'https://discordapp.com/api/webhooks/1425105978277498900/h3TP6MRKlZ_dnwnBO12Y6Yc85_jLpSUnNH1gZZc4etjxtECt_QVTIg8RlCSnL9ig7mxS'
+                )
+            }
+        }
+
+        failure {
+            script {
+                def payload = [
+                    content: "❌ Build FAILED on ${env.BRANCH_NAME}\n🔗 URL: ${env.BUILD_URL}"
+                ]
+                httpRequest(
+                    httpMode: 'POST',
+                    contentType: 'APPLICATION_JSON',
+                    requestBody: groovy.json.JsonOutput.toJson(payload),
+                    url: 'https://discordapp.com/api/webhooks/1425105978277498900/h3TP6MRKlZ_dnwnBO12Y6Yc85_jLpSUnNH1gZZc4etjxtECt_QVTIg8RlCSnL9ig7mxS'
+                )
             }
         }
     }
